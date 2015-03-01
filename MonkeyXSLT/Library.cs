@@ -11,31 +11,52 @@ using System.Xml.XPath;
 
 namespace MonkeyXSLT {
     public class Library {
-        public static XPathNodeIterator AddToMailchimp(string mail, string name, string listId, string APIKeyAlias) {
-            try {
+        public static XPathNodeIterator MailchimpSubscribe(string mail, string listId, string APIKeyAlias)
+        {
+            try
+            {
                 string apiKey = ConfigurationManager.AppSettings[APIKeyAlias];
-                string dc = apiKey.Substring(apiKey.Length - 3);
-                /*
-                string url = "http://" + dc + ".api.mailchimp.com/1.3/?method=listSubscribe" +
-                    "&apikey=" + apiKey +
-                        "&id=" + listId +
-                        "&email_address=" + mail +
-                        "&merge_vars[NAME]=" + name +
-                        "&output=json";
+                MailChimpManager MC = new MailChimpManager(apiKey);
+                EmailParameter email = new EmailParameter()
+                {
+                    Email = mail
+                };
+                EmailParameter results = MC.Subscribe(listId, email, null, "html", false, true, true, false);
 
-                APICall api = new APICall(url);
-                string response = api.GetResponse();
-                */
-
-                var response = "der";
-                string xmlVal = "<status success=\"true\">" + response + "</status>";
+                string xmlVal = "<status success=\"true\">" + results.Email + "</status>";
 
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(xmlVal);
                 return doc.CreateNavigator().Select(".");
 
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
+                return GetErrorXML(ex.Message);
+            }
+        }
+
+        public static XPathNodeIterator MailchimpUnsubscribe(string mail, string listId, string APIKeyAlias)
+        {
+            try
+            {
+                string apiKey = ConfigurationManager.AppSettings[APIKeyAlias];
+                MailChimpManager MC = new MailChimpManager(apiKey);
+                EmailParameter email = new EmailParameter()
+                {
+                    Email = mail
+                };
+                UnsubscribeResult results = MC.Unsubscribe(listId, email, false, false, false);
+
+                string xmlVal = "<status success=\"true\">" + results.Complete.ToString() + "</status>";
+
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(xmlVal);
+                return doc.CreateNavigator().Select(".");
+
+            }
+            catch (Exception ex)
+            {
                 return GetErrorXML(ex.Message);
             }
         }
